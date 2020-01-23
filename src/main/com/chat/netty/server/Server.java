@@ -48,7 +48,7 @@ public class Server {
 				if (future.isSuccess()) {
 					logger.info("서버를 시작합니다.");
 				}else {
-					logger.info("서버 작동에 실패했습니다.");
+					logger.info("서버 작동에 실패했습니다. 다시 한번 시도해 주시기 바랍니다.");
 					logger.error("exception msg",future.cause());
 				}
 			}
