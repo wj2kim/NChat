@@ -14,59 +14,66 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
+import io.netty.handler.codec.Delimiters;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 
-public class Server {
+public class NChatServer {
 	
-	private static final Logger logger = Logger.getLogger(Server.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(NChatServer.class.getName());
+	private static final int PORT = 8080;
 	
-//	private static final int PORT = 8023;
 	ServerBootstrap bStrap=new ServerBootstrap();
+	EventLoopGroup bossGroup=new NioEventLoopGroup();
 	
-	public Server() {
+	public NChatServer() {
 		bStrap.childOption(ChannelOption.ALLOCATOR, new PooledByteBufAllocator(false));
 		ChannelInitializer<Channel>initializer = new ChannelInitializer<Channel>() {
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
 				// TODO Auto-generated method stub
-				ch.pipeline().addLast();
-				ch.pipeline().addLast();
-				ch.pipeline().addLast();
-				ch.pipeline().addLast();
-				ch.pipeline().addLast();
+				ch.pipeline().addLast(new DelimiterBasedFrameDecoder(8192,Delimiters.lineDelimiter()));
+				ch.pipeline().addLast(new StringDecoder());
+				ch.pipeline().addLast(new StringEncoder());
+				ch.pipeline().addLast(new NChatServerHandler());
 			}
 		};
-		EventLoopGroup bossGroup = new NioEventLoopGroup();
-		serverOff();
+//		EventLoopGroup bossGroup = new NioEventLoopGroup();
+//		serverOff();
 		bStrap.group(bossGroup).channel(NioServerSocketChannel.class).childHandler(initializer);
 	}
 	
 	public void run() {
-		ChannelFuture future = bStrap.bind(new InetSocketAddress(8080));
+		ChannelFuture future = bStrap.bind(new InetSocketAddress(PORT));
 		future.addListener(new ChannelFutureListener() {
 			@Override
 			public void operationComplete(ChannelFuture future) throws Exception {
 				if (future.isSuccess()) {
-					logger.info("서버를 시작합니다.");
+					LOGGER.info("서버를 시작합니다.");
 				}else {
-					logger.info("서버 작동에 실패했습니다. 다시 한번 시도해 주시기 바랍니다.");
-					logger.error("exception msg",future.cause());
+					LOGGER.error("서버를 실행하지 못했습니다. 다시 한번 시도해 주시기 바랍니다.",future.cause());
 				}
 			}
 		});
 		try {
 			future.channel().closeFuture().sync();
 		}catch(InterruptedException e) {
-			logger.error("exception msg", e);
+			LOGGER.error("exception msg", e);
 			// 에러의 추적성을 높이기 위해 전체 에러 스택을 다 넘기는 편이 좋다고 한다.
 		}
 	}
 	
 	public void serverOff() {
-		
+		try {
+			bossGroup.shutdownGracefully().sync();
+		}catch(InterruptedException e) {
+			LOGGER.error("서버를 종료하는 도중 에러가 발생했습니다.", e);
+		}
 	}
 	
 	public static void main (String[] args) {
-		Server server = new Server();
+		NChatServer server = new NChatServer();
 		server.run();
 	}
 }
