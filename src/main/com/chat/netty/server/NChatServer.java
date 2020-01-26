@@ -30,6 +30,7 @@ public class NChatServer {
 	public NChatServer() {
 		bStrap.childOption(ChannelOption.ALLOCATOR, new PooledByteBufAllocator(false));
 		ChannelInitializer<Channel>initializer = new ChannelInitializer<Channel>() {
+			// 채팅 서버의 채널을 초기화
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
 				// TODO Auto-generated method stub
@@ -59,7 +60,7 @@ public class NChatServer {
 		try {
 			future.channel().closeFuture().sync();
 		}catch(InterruptedException e) {
-			LOGGER.error("exception msg", e);
+			LOGGER.error("InterruptedException msg", e);
 			// 에러의 추적성을 높이기 위해 전체 에러 스택을 다 넘기는 편이 좋다고 한다.
 		}
 	}
