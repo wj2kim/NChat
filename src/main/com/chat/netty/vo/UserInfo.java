@@ -1,29 +1,42 @@
 package com.chat.netty.vo;
 
-import com.chat.netty.reference.UserId;
-import com.chat.netty.reference.UserName;
-
 public class UserInfo {
 	
-	private UserId userId;
-	private UserName userName;
+	private String userName;
+	private String userId;
 	
 	public UserInfo() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public UserInfo(UserId userId, UserName userName) {
+	public UserInfo(String userName, String userId) {
+		this.userName = userName;
 		this.userId = userId;
+	}
+	
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
 		this.userName = userName;
 	}
 
-	public UserId getUserId() {
+	public String getUserId() {
 		return userId;
 	}
 
-	public UserName getUserName() {
-		return userName;
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
+
+
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return super.toString();
+	}
+
 	
 	
 	

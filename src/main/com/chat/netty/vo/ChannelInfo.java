@@ -8,6 +8,9 @@ public class ChannelInfo {
     private ChannelHandlerContext ctx; 
     private UserInfo userInfo;
     
+    public ChannelInfo() {
+		// TODO Auto-generated constructor stub
+	}
     
 	public ChannelInfo(ChannelHandlerContext ctx) {
 		super();

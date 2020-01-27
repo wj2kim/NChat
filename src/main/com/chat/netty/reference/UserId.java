@@ -6,16 +6,18 @@ public class UserId {
 	private final int userId;
 	private AtomicInteger atomInt = new AtomicInteger(100);
 
-	public UserId() {
-		userId = createId();
+	public UserId(int userId) {
+		this.userId = userId;
 	}
 	
 	public int getUserId() {
 		return userId;
 	}
 	
-	private int createId() {
+	private int nextId() {
 		return atomInt.getAndIncrement();
 	}
+	
+	
 
 }

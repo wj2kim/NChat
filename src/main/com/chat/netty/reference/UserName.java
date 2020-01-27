@@ -8,8 +8,9 @@ public class UserName {
 	public UserName(String userName) {
 		if(userName.length()>maxLength) {
 			throw new IllegalArgumentException("닉네임이 너무 깁니다. 다시 설정해주시기 바랍니다.(1~10자)");
+		}else {
+			this.userName = userName;			
 		}
-		this.userName = userName;
 	}
 	
 	public String getUserName() {

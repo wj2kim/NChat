@@ -68,6 +68,7 @@ public class Server {
 	public void serverOff() {
 		try {
 			bossGroup.shutdownGracefully().sync();
+			LOGGER.info("서버를 종료합니다.");
 		}catch(InterruptedException e) {
 			LOGGER.error("서버를 종료하는 도중 에러가 발생했습니다.", e);
 		}
