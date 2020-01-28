@@ -1,6 +1,9 @@
 package com.chat.netty.server;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -22,9 +25,12 @@ public class Server {
 	
 	private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 	private static final int PORT = 8888;
+	private final ExecutorService pool = Executors.newCachedThreadPool();
+	private Runnable shutdownAction;
 	
 	ServerBootstrap sBoot=new ServerBootstrap();
 	NioEventLoopGroup bossGroup=new NioEventLoopGroup();
+	
 	
 	public Server() {
 		sBoot.childOption(ChannelOption.ALLOCATOR, new PooledByteBufAllocator(false));
@@ -36,7 +42,7 @@ public class Server {
 				ch.pipeline().addLast(new DelimiterBasedFrameDecoder(3000,Delimiters.lineDelimiter()));
 				ch.pipeline().addLast(new StringDecoder());
 				ch.pipeline().addLast(new StringEncoder());
-				ch.pipeline().addLast(new ServerHandler());
+				ch.pipeline().addLast(new ServerHandler(pool, shutdownAction));
 			}
 		};
 //		EventLoopGroup bossGroup = new NioEventLoopGroup();
@@ -66,12 +72,20 @@ public class Server {
 	}
 	
 	public void serverOff() {
-		try {
-			bossGroup.shutdownGracefully().sync();
-			LOGGER.info("서버를 종료합니다.");
-		}catch(InterruptedException e) {
-			LOGGER.error("서버를 종료하는 도중 에러가 발생했습니다.", e);
-		}
+		shutdownAction = new Runnable () {
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				try {
+					bossGroup.shutdownGracefully().sync();
+					pool.shutdown();
+					pool.awaitTermination(5, TimeUnit.SECONDS);
+					LOGGER.info("서버를 종료합니다.");
+				}catch(InterruptedException e) {
+					LOGGER.error("서버를 종료하는 도중 에러가 발생했습니다.", e);
+				}		
+			}
+		};
 	}
 	
 	public static void main (String[] args) {

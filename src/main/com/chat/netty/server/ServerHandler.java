@@ -2,10 +2,12 @@ package com.chat.netty.server;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.log4j.Logger;
 
 import com.chat.netty.vo.ChannelInfo;
+import com.chat.netty.vo.UserInfo;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -23,6 +25,15 @@ public class ServerHandler extends ChannelInboundHandlerAdapter{
 	private static final ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 	public static final AttributeKey<ChannelInfo> CHANNEL_INFO = AttributeKey.valueOf("channelInfo");
 	
+	private ExecutorService pool;
+	private Runnable shutdownAction;
+	
+	
+	public ServerHandler(ExecutorService pool, Runnable shutdownAction) {
+		this.pool = pool;
+		this.shutdownAction = shutdownAction;
+	}
+	
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		// Channel이 활성화 될때 마다 ChannelInfo와 연결짓기.
@@ -38,45 +49,51 @@ public class ServerHandler extends ChannelInboundHandlerAdapter{
 	
 	@Override
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-		Channel newChannel = ctx.channel();
-		LOGGER.info("IP주소가 " + newChannel.remoteAddress()+" 인 사용자가 서버에 접속했습니다.");
+		Channel incomming = ctx.channel();
+		LOGGER.info("IP주소가 " + incomming.remoteAddress()+" 인 사용자가 서버에 접속했습니다.");
 		
 		
 		for(Channel ch : channelGroup) {
-			ch.write(newChannel.remoteAddress()+" 님이 입장했습니다.");
+			ch.write(incomming.remoteAddress()+" 님이 입장했습니다.");
 		}
-		channelGroup.add(newChannel);
+		channelGroup.add(incomming);
 	}
 	
 	@Override
 	public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-		Channel newChannel = ctx.channel();
-		LOGGER.info("IP주소가 " + newChannel.remoteAddress()+" 인 사용자가 서버에서 나갔습니다.");
+		Channel incomming = ctx.channel();
+		LOGGER.info("IP주소가 " + incomming.remoteAddress()+" 인 사용자가 서버에서 나갔습니다.");
 		
 		
 		for(Channel ch : channelGroup) {
-			ch.write(newChannel.remoteAddress()+" 님이 퇴장했습니다.");
+			ch.write(incomming.remoteAddress()+" 님이 퇴장했습니다.");
 		}
-		channelGroup.remove(newChannel);
+		channelGroup.remove(incomming);
 	}
 	
 	
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+		
+		if(msg instanceof UserInfo) {
+			LOGGER.info(((UserInfo) msg).getUserId()+ " : " +
+			((UserInfo) msg).getUserName());
+		}
+		
 		String message = null;
 		message = (String)msg;		
-		Channel newChannel = ctx.channel();
-		LOGGER.info("주고 받은 메시지 : " + newChannel.remoteAddress() + " : "+ message);
+		Channel incomming = ctx.channel();
+		LOGGER.info("주고 받은 메시지 : " + incomming.remoteAddress() + " : "+ message);
 		
 //		for(Channel ch : channelGroup) {
-//			if(ch != newChannel) {
-//				ch.writeAndFlush("FROM - "+newChannel.remoteAddress()+" : "+message+"\r\n");
+//			if(ch != incomming) {
+//				ch.writeAndFlush("FROM - "+incomming.remoteAddress()+" : "+message+"\r\n");
 //			}
 //			if("bye".equals(message.toLowerCase())) {
 //				ctx.close();
 //			}
 //		}
-//		channelGroup.remove(newChannel);
+//		channelGroup.remove(incomming);
 
 		
 		

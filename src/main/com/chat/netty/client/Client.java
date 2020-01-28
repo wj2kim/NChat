@@ -1,11 +1,14 @@
 package com.chat.netty.client;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
@@ -33,7 +36,7 @@ public class Client {
 	private final ExecutorService pool = Executors.newCachedThreadPool();
 	
 	UserInfo userInfo = new UserInfo();
-	ChannelInfo channelInfo = new ChannelInfo();
+//	ChannelInfo channelInfo = new ChannelInfo();
 
 	
 	public Client() {
@@ -60,12 +63,21 @@ public class Client {
 					System.out.print(" ----------- NChat에 오신것을 환영합니다 ----------- \r\n");
 					System.out.print(" --------------------------------------------- \r\n");
 					System.out.println();
-					mainGate(future.channel().id().toString());
+					mainGate(future.channel().id().toString(), future);
 				}else {
 					LOGGER.error("서버와의 연결에 실패했습니다. 다시 한번 시도해 주시기 바랍니다.",future.cause());
 				}
 			}
 		});
+		
+//		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+//		String line;
+//		try {
+//			line = in.readLine();
+//			future.channel().writeAndFlush("이거 가나 "+ line + "\r\n");
+//		} catch (IOException e1) {
+//			e1.printStackTrace();
+//		}
 		
 //		
 //		ChannelFuture lastWriteFuture = null;
@@ -115,6 +127,8 @@ public class Client {
 	public void shutdown() {
 		try {
 			workerLoopGroup.shutdownGracefully().sync();
+			pool.shutdown();
+			pool.awaitTermination(5, TimeUnit.SECONDS);
 		}catch(InterruptedException e) {
 			LOGGER.error("InterruptedException msg",e);
 		}
@@ -125,12 +139,11 @@ public class Client {
 		client.start();
 	}
 	
-	private void mainGate(String userId) {
+	private void mainGate(String userId, ChannelFuture future) {
 		// NChat의 시작 루프. 닉네임 먼저 설정하기 -> 대기실
 		pool.execute(new Runnable() {
 			@Override
 			public void run() {
-
 				boolean nameSetNeeded = true;
 				do {
 					try {
@@ -139,9 +152,17 @@ public class Client {
 						if (line!=null) {
 							userInfo.setUserName(line); 
 							userInfo.setUserId(userId);
-							// 대기실로 연결
-							channelInfo.setUserInfo(userInfo);
-							waitingRoom();
+//							channelInfo.setUserInfo(userInfo);
+							if(!userInfo.getUserId().isEmpty() && !userInfo.getUserName().isEmpty()) {
+								ChannelFuture sendUserInfo = 
+										future.channel().writeAndFlush(userInfo);
+								sendUserInfo.sync();
+								// 대기실로 연결
+								waitingRoom();								
+							}else {
+								System.out.println("닉네임을 다시 설정해주시기 바랍니다.");
+								continue;
+							}
 //							nameSetNeeded = false;
 						}else {
 							System.out.print("닉네임을 형식에 맞게 입력해 주시기 바랍니다. \r\n");
@@ -184,10 +205,10 @@ public class Client {
     private void waitingRoom() {
     	boolean resetUserName = false;
     	do {
-    		System.out.println("waitingRoom 입장.");
-    		System.out.println(channelInfo.getCtx());
-    		System.out.println(channelInfo.getUserInfo().getUserId());
-    		System.out.println(channelInfo.getUserInfo().getUserName());
+    		System.out.println("--------------- 대기실 입장 ---------------");
+//    		System.out.println(channelInfo.getCtx());
+    		System.out.println(userInfo.getUserId());
+    		System.out.println(userInfo.getUserName());
     	}while(resetUserName);
     }
 	
