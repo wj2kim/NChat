@@ -16,39 +16,36 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import io.netty.handler.codec.Delimiters;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
 
 public class Server {
-	
-	private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 	private static final int PORT = 8888;
-	private final ExecutorService pool = Executors.newCachedThreadPool();
-	private Runnable shutdownAction;
+	private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 	
-	ServerBootstrap sBoot=new ServerBootstrap();
-	NioEventLoopGroup bossGroup=new NioEventLoopGroup();
+	private final ExecutorService pool = Executors.newCachedThreadPool();
+	private Runnable shutdownServer;
+	
+	ServerBootstrap sBoot;
+	NioEventLoopGroup bossLoopGroup;
+	NioEventLoopGroup workerLoopGroup;
 	
 	
 	public Server() {
+		sBoot = new ServerBootstrap();
 		sBoot.childOption(ChannelOption.ALLOCATOR, new PooledByteBufAllocator(false));
 		ChannelInitializer<Channel>initializer = new ChannelInitializer<Channel>() {
 			// 채팅 서버의 채널을 초기화
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
-				// TODO Auto-generated method stub
-				ch.pipeline().addLast(new DelimiterBasedFrameDecoder(3000,Delimiters.lineDelimiter()));
-				ch.pipeline().addLast(new StringDecoder());
-				ch.pipeline().addLast(new StringEncoder());
-				ch.pipeline().addLast(new ServerHandler(pool, shutdownAction));
+//				ch.pipeline().addLast(new DelimiterBasedFrameDecoder(3000,Delimiters.lineDelimiter()));
+//				ch.pipeline().addLast(new StringDecoder());
+//				ch.pipeline().addLast(new StringEncoder());
+				ch.pipeline().addLast(new ServerHandler(pool, shutdownServer));
 			}
 		};
-//		EventLoopGroup bossGroup = new NioEventLoopGroup();
-//		serverOff();
-//		sBoot.handler(new ServerHandler());
-		sBoot.group(bossGroup).channel(NioServerSocketChannel.class).childHandler(initializer);
+		bossLoopGroup = new NioEventLoopGroup(1);
+		workerLoopGroup = new NioEventLoopGroup();
+		serverOff();
+		sBoot.group(bossLoopGroup, workerLoopGroup).channel(NioServerSocketChannel.class).childHandler(initializer);
 	}
 	
 	public void run() {
@@ -59,7 +56,7 @@ public class Server {
 				if (future.isSuccess()) {
 					LOGGER.info("서버를 시작합니다.");
 				}else {
-					LOGGER.error("서버를 실행하지 못했습니다. 다시 한번 시도해 주시기 바랍니다.",future.cause());
+					LOGGER.error("서버 시작 중 에러가 발생했습니다. 다시 한번 시도해 주시기 바랍니다.", future.cause());
 				}
 			}
 		});
@@ -72,15 +69,15 @@ public class Server {
 	}
 	
 	public void serverOff() {
-		shutdownAction = new Runnable () {
+		shutdownServer = new Runnable () {
 			@Override
 			public void run() {
 				// TODO Auto-generated method stub
 				try {
-					bossGroup.shutdownGracefully().sync();
+					LOGGER.info("서버를 종료합니다.");
+					bossLoopGroup.shutdownGracefully().sync();
 					pool.shutdown();
 					pool.awaitTermination(5, TimeUnit.SECONDS);
-					LOGGER.info("서버를 종료합니다.");
 				}catch(InterruptedException e) {
 					LOGGER.error("서버를 종료하는 도중 에러가 발생했습니다.", e);
 				}		

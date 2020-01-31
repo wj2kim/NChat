@@ -19,12 +19,12 @@ public class ServerHandler extends ChannelInboundHandlerAdapter{
 	private static final ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 	
 	private ExecutorService pool;
-	private Runnable shutdownAction;
+	private Runnable shutdownServer;
 	
 	
-	public ServerHandler(ExecutorService pool, Runnable shutdownAction) {
+	public ServerHandler(ExecutorService pool, Runnable shutdownServer) {
 		this.pool = pool;
-		this.shutdownAction = shutdownAction;
+		this.shutdownServer = shutdownServer;
 	}
 	
 //	@Override
@@ -46,10 +46,10 @@ public class ServerHandler extends ChannelInboundHandlerAdapter{
 		LOGGER.info("IP주소가 " + incomming.remoteAddress()+" 인 사용자가 서버에 접속했습니다.");
 		
 		
-		for(Channel ch : channelGroup) {
-			ch.write(incomming.remoteAddress()+" 님이 입장했습니다.");
-		}
-		channelGroup.add(incomming);
+//		for(Channel ch : channelGroup) {
+//			ch.write(incomming.remoteAddress()+" 님이 입장했습니다.");
+//		}
+//		channelGroup.add(incomming);
 	}
 	
 	@Override
@@ -58,16 +58,16 @@ public class ServerHandler extends ChannelInboundHandlerAdapter{
 		LOGGER.info("IP주소가 " + incomming.remoteAddress()+" 인 사용자가 서버에서 나갔습니다.");
 		
 		
-		for(Channel ch : channelGroup) {
-			ch.write(incomming.remoteAddress()+" 님이 퇴장했습니다.");
-		}
-		channelGroup.remove(incomming);
+//		for(Channel ch : channelGroup) {
+//			ch.write(incomming.remoteAddress()+" 님이 퇴장했습니다.");
+//		}
+//		channelGroup.remove(incomming);
 	}
 	
 	
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-		
+
 		if(msg instanceof UserInfo) {
 			LOGGER.info(((UserInfo) msg).getUserId()+ " : " +
 			((UserInfo) msg).getUserName());
@@ -77,6 +77,13 @@ public class ServerHandler extends ChannelInboundHandlerAdapter{
 		message = (String)msg;		
 		Channel incomming = ctx.channel();
 		LOGGER.info("주고 받은 메시지 : " + incomming.remoteAddress() + " : "+ message);
+//		
+//		if(msg instanceof SetUserName) {
+//			boolean isUserNameTaken(msg);
+//			if(isUserNameTaken) {
+//				sendResponse(isUserNameTaken);
+//			}
+//		}
 	}
 	
 	@Override
@@ -88,6 +95,18 @@ public class ServerHandler extends ChannelInboundHandlerAdapter{
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		cause.printStackTrace();
 		ctx.close();
+	}
+	
+	private boolean isUserNameTaken(Object msg) {
+		// ChatManager을 이용해 닉네임 중복 체크
+//		if(manager.getAllUsers().isEmpty() || !manager.getAllUsers.containsKey(msg)) {
+//			return true;
+//		}
+		return false;
+	}
+	
+	private void sendResponse() {
+		
 	}
 	
 	
