@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import com.chat.netty.vo.ChannelInfo;
 import com.chat.netty.vo.UserInfo;
 
 import io.netty.bootstrap.Bootstrap;
@@ -46,7 +45,7 @@ public class Client {
 				ch.pipeline().addLast(new DelimiterBasedFrameDecoder(3000, Delimiters.lineDelimiter()));
 				ch.pipeline().addLast(new StringEncoder());
 				ch.pipeline().addLast(new StringDecoder());
-				ch.pipeline().addLast(new ClientHandler());
+				ch.pipeline().addLast(new ClientHandler(pool));
 			}
 		};
 		boot.group(workerLoopGroup).channel(NioSocketChannel.class).handler(initializer);
@@ -58,12 +57,12 @@ public class Client {
 			@Override
 			public void operationComplete(ChannelFuture future) throws Exception {
 				if(future.isSuccess()) {
-					System.out.println();
-					System.out.print(" --------------------------------------------- \r\n");
-					System.out.print(" ----------- NChat에 오신것을 환영합니다 ----------- \r\n");
-					System.out.print(" --------------------------------------------- \r\n");
-					System.out.println();
-					mainGate(future.channel().id().toString(), future);
+//					System.out.println();
+//					System.out.print(" --------------------------------------------- \r\n");
+//					System.out.print(" ----------- NChat에 오신것을 환영합니다 ----------- \r\n");
+//					System.out.print(" --------------------------------------------- \r\n");
+//					System.out.println();
+//					mainGate(future.channel().id().toString(), future);
 				}else {
 					LOGGER.error("서버와의 연결에 실패했습니다. 다시 한번 시도해 주시기 바랍니다.",future.cause());
 				}
@@ -157,8 +156,7 @@ public class Client {
 								ChannelFuture sendUserInfo = 
 										future.channel().writeAndFlush(userInfo);
 								sendUserInfo.sync();
-								// 대기실로 연결
-								waitingRoom();								
+								// 대기실로 연결						
 							}else {
 								System.out.println("닉네임을 다시 설정해주시기 바랍니다.");
 								continue;
@@ -202,16 +200,6 @@ public class Client {
     }
     
     
-    private void waitingRoom() {
-    	boolean resetUserName = false;
-    	do {
-    		System.out.println("--------------- 대기실 입장 ---------------");
-//    		System.out.println(channelInfo.getCtx());
-    		System.out.println(userInfo.getUserId());
-    		System.out.println(userInfo.getUserName());
-    	}while(resetUserName);
-    }
-	
 	
 
 }
