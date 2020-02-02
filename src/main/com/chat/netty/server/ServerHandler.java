@@ -7,7 +7,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.apache.log4j.Logger;
 
-import com.chat.netty.reference.Command;
+import com.chat.netty.reference.Message;
 import com.chat.netty.reference.FalseResponse;
 import com.chat.netty.reference.SetUserName;
 import com.chat.netty.reference.TrueResponse;
@@ -22,7 +22,7 @@ import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
-public class ServerHandler extends SimpleChannelInboundHandler<Command>{
+public class ServerHandler extends SimpleChannelInboundHandler<Message>{
 	
 	private static final Logger LOGGER = Logger.getLogger(ServerHandler.class.getName());
 	private static final ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
@@ -86,14 +86,14 @@ public class ServerHandler extends SimpleChannelInboundHandler<Command>{
 	}
 	
 	@Override
-	protected void channelRead0(ChannelHandlerContext ctx, Command cmd) throws Exception {
+	protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
 		// TODO Auto-generated method stub
-		LOGGER.info("클라이언트로 부터 요청받음 : "+ cmd.toString());
+		LOGGER.info("클라이언트로 부터 요청받음 : "+ msg.toString());
 		
 		UserInfo userInfo = ctx.channel().attr(user).get();
 		
-		if(cmd instanceof SetUserName) {
-			setUserName(userInfo, cmd);
+		if(msg instanceof SetUserName) {
+			setUserName(userInfo, msg);
 		}
 		
 	}
@@ -102,7 +102,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Command>{
 
 //		ChannelInfo channelInfo = aCtx.channel().attr(ChannelListener.CHANNEL_INFO).get();
 		
-//		if(msg instanceof ProgramExitRequest) {
+//		if(msg instanceof ProgramExitmsguest) {
 ////			processExit(msg, channelInfo);
 //			processExit(ctx);
 //		}
@@ -136,29 +136,33 @@ public class ServerHandler extends SimpleChannelInboundHandler<Command>{
 		ctx.close();
 	}
 	
-	private void setUserName(UserInfo userInfo, Command cmd) {
-		ChannelHandlerContext ctx = userInfo.getCtx();
-		if(isUserNameTaken(cmd)) {
-			// 중복 - 클라이언트에게 사용중이라 응답 보내기 
-			cmd = new FalseResponse("nameAlreadyExist","");
-		}else {
-			// 서버에 유저 정보 저장하고 클라이언트에게 처리 완료 응답 보내기
-			userInfo.setUserName(cmd.getContent());
-			manager.setUser(userInfo);
-//			allUsers.setUserInfo(userInfo);
-//			allUsers.put(userInfo.getUserName(), userInfo);
-//			manager.getAllUsers().put(cmd.getContent(), userInfo);
-			LOGGER.info("IP주소가 "+ctx.channel().remoteAddress()+"인 사용자가 닉네임을 등록했습니다. 닉네임 : " + cmd.getContent());
-			cmd = new TrueResponse("nameSet","");
-		}
-		manager.printAllUsers();
-		ctx.writeAndFlush(cmd);
+	private void setUserName(final UserInfo userInfo, final Message msg) {
+		pool.execute(new Runnable() {
+			@Override
+			public void run() {
+				ChannelHandlerContext ctx = userInfo.getCtx();
+				if(isUserNameTaken(msg)) {
+					// 중복 - 클라이언트에게 사용중이라 응답 보내기 
+					ctx.writeAndFlush(new FalseResponse("nameAlreadyExist",""));
+				}else {
+					// 서버에 유저 정보 저장하고 클라이언트에게 처리 완료 응답 보내기
+					userInfo.setUserName(msg.getContent());
+					manager.setUser(userInfo);
+//					allUsers.setUserInfo(userInfo);
+//					allUsers.put(userInfo.getUserName(), userInfo);
+//					manager.getAllUsers().put(cmd.getContent(), userInfo);
+					LOGGER.info("IP주소가 "+ctx.channel().remoteAddress()+"인 사용자가 닉네임을 등록했습니다. 닉네임 : " + msg.getContent());
+					ctx.writeAndFlush(new TrueResponse("nameSet",""));
+				}
+				manager.printAllUsers();
+			}
+		});
 	}
 	
-	private boolean isUserNameTaken(Command cmd) {
+	private boolean isUserNameTaken(final Message msg) {
 //		ChatManager을 이용해 닉네임 중복 체크
 		if(manager.getAllUsers() == null || manager.getAllUsers().isEmpty()
-				|| ! manager.getAllUsers().containsKey(cmd.getContent())) {
+				|| ! manager.getAllUsers().containsKey(msg.getContent())) {
 			return false;
 		}
 		return true;

@@ -1,6 +1,6 @@
 package com.chat.netty.reference;
 
-public enum CommandType {
+public enum MessageType {
 	// client -> Server 
 	SET_USERNAME("setUserName"),
 	PROGRAM_EXIT("exit"),
@@ -28,7 +28,7 @@ public enum CommandType {
 	
 	private final String type;
 	
-	CommandType(String type){
+	MessageType(String type){
 		this.type = type;
 	}
 	
@@ -37,8 +37,8 @@ public enum CommandType {
 	}
 	
 	
-	public static CommandType forType(String type) {
-		for(CommandType ct : CommandType.values()) {
+	public static MessageType forType(String type) {
+		for(MessageType ct : MessageType.values()) {
 			if(ct.type == type) {
 				return ct;
 			}

@@ -1,10 +1,10 @@
 package com.chat.netty.reference;
 
-public class ProgramExitRequest extends Command {
+public class ProgramExitRequest extends Message {
 	
 	
 	public ProgramExitRequest() {
-		super(CommandType.PROGRAM_EXIT);
+		super(MessageType.PROGRAM_EXIT);
 	}
 	
 	

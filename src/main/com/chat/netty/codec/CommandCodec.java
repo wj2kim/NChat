@@ -2,17 +2,17 @@ package com.chat.netty.codec;
 
 import java.util.List;
 
-import com.chat.netty.reference.Command;
-import com.chat.netty.reference.CommandType;
+import com.chat.netty.reference.Message;
+import com.chat.netty.reference.MessageType;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageCodec;
 
-public class CommandCodec extends ByteToMessageCodec<Command>{
+public class CommandCodec extends ByteToMessageCodec<Message>{
 	
-	protected void encode(ChannelHandlerContext ctx, Command cmd, ByteBuf out) throws Exception {
-		CommandType command = cmd.getCommandType();
+	protected void encode(ChannelHandlerContext ctx, Message cmd, ByteBuf out) throws Exception {
+		MessageType command = cmd.getCommandType();
 		
 		
 	};

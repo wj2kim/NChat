@@ -7,8 +7,8 @@ import java.util.concurrent.ExecutorService;
 
 import org.apache.log4j.Logger;
 
-import com.chat.netty.reference.Command;
-import com.chat.netty.reference.CommandType;
+import com.chat.netty.reference.Message;
+import com.chat.netty.reference.MessageType;
 import com.chat.netty.reference.FalseResponse;
 import com.chat.netty.reference.SetUserName;
 import com.chat.netty.reference.TrueResponse;
@@ -21,7 +21,7 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
-public class ClientHandler extends SimpleChannelInboundHandler<Command>{
+public class ClientHandler extends SimpleChannelInboundHandler<Message>{
 	
 	private static final Logger LOGGER = Logger.getLogger(ClientHandler.class.getName());
 	private static final ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
@@ -45,18 +45,18 @@ public class ClientHandler extends SimpleChannelInboundHandler<Command>{
 	}
 	
 	@Override
-	protected void channelRead0(ChannelHandlerContext ctx, Command cmd) throws Exception {
+	protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
 		// TODO Auto-generated method stub
-		if(cmd instanceof FalseResponse) {
-			if(cmd.getCommandType() == CommandType.NAME_AlREADY_EXIST ) {
+		if(msg instanceof FalseResponse) {
+			if(msg.getCommandType() == MessageType.NAME_AlREADY_EXIST ) {
 				System.out.println("해당 닉네임은 이미 사용중입니다.");
 				welcomeScreen(ctx);
 //				progressOrNot(false);
 			}
 		}
 		
-		if(cmd instanceof TrueResponse) {
-			if(cmd.getCommandType() == CommandType.NAME_SET) {
+		if(msg instanceof TrueResponse) {
+			if(msg.getCommandType() == MessageType.NAME_SET) {
 				System.out.println("해당 닉네임으로 계정이 생성됬습니다. 대기실로 이동합니다.");
 				mainLoop(ctx);
 //				progressOrNot(true);
@@ -85,16 +85,16 @@ public class ClientHandler extends SimpleChannelInboundHandler<Command>{
 					System.out.print(" ------------ NChat에 오신것을 환영합니다 ------------ \r\n");
 					System.out.print(" ----------------------------------------------- \r\n");
 					content = setUserName();
-					Command cmd = new SetUserName(content);
-					sendToServer(ctx, cmd);
+					Message msg = new SetUserName(content);
+					sendToServer(ctx, msg);
 //					if(progreeOrNot() == false) {
 //						continue;
 //					}
 					// 서버에서 로직 처리가 완료됬다는 응답이 오면 다음 단계로 넘어가야하는데 어떻게 할까?
 //					mainLoop(ctx);
-//					if (cmd instanceof SetNickName) {
-//						System.out.println("content : "+cmd.getContent());
-//						System.out.println("content : "+cmd.getCommandType());
+//					if (msg instanceof SetNickName) {
+//						System.out.println("content : "+msg.getContent());
+//						System.out.println("content : "+msg.getCommandType());
 //					}
 //					서버로 request 한 후 
 //				}while(!isShutdown);
@@ -201,8 +201,8 @@ public class ClientHandler extends SimpleChannelInboundHandler<Command>{
 		return line;
     }
     
-    private void sendToServer(ChannelHandlerContext ctx, Command cmd) {
-    	ChannelFuture future =  ctx.writeAndFlush(cmd);
+    private void sendToServer(ChannelHandlerContext ctx, Message msg) {
+    	ChannelFuture future =  ctx.writeAndFlush(msg);
     	future.addListener(new ChannelFutureListener() {
 			@Override
 			public void operationComplete(ChannelFuture future) throws Exception {

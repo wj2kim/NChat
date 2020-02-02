@@ -2,20 +2,20 @@ package com.chat.netty.reference;
 
 import java.io.Serializable;
 
-public abstract class Command implements Serializable{
+public abstract class Message implements Serializable{
 	
-	private CommandType commandType;
+	private MessageType commandType;
 	private String content;
 	
-	public Command(CommandType commandType) {
+	public Message(MessageType commandType) {
 		this.commandType = commandType;
 	}
 	
-	public Command() {
+	public Message() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public CommandType getCommandType() {
+	public MessageType getCommandType() {
 		return commandType;
 	}
 
