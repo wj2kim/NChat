@@ -1,10 +1,10 @@
 package com.chat.netty.reference;
 
-public class SetNickName extends Command{
+public class SetUserName extends Command{
 
 	private final String content;
 	
-	public SetNickName(String content) {
+	public SetUserName(String content) {
 		super(CommandType.SET_USERNAME);
 		this.content = content;
 	}

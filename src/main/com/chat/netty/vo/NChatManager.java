@@ -4,18 +4,18 @@ import java.util.Map;
 
 public class NChatManager {
 
-	private Map<String, AllUserInfo>allUsers;
+	private Map<String, UserInfo>allUsers;
 	private Map<String, RoomInfo>allRooms;
 	
 	public NChatManager() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public Map<String, AllUserInfo> getAllUsers() {
+	public Map<String, UserInfo> getAllUsers() {
 		return allUsers;
 	}
 
-	public void setAllUsers(Map<String, AllUserInfo> allUsers) {
+	public void setAllUsers(Map<String, UserInfo> allUsers) {
 		this.allUsers = allUsers;
 	}
 

@@ -8,18 +8,18 @@ import java.util.concurrent.ExecutorService;
 import org.apache.log4j.Logger;
 
 import com.chat.netty.reference.Command;
-import com.chat.netty.reference.ProgramExitRequest;
-import com.chat.netty.reference.SetNickName;
+import com.chat.netty.reference.SetUserName;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
-public class ClientHandler extends ChannelInboundHandlerAdapter{
+public class ClientHandler extends SimpleChannelInboundHandler<Command>{
 	
 	private static final Logger LOGGER = Logger.getLogger(ClientHandler.class.getName());
 	private static final ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
@@ -31,7 +31,9 @@ public class ClientHandler extends ChannelInboundHandlerAdapter{
 	
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-
+		//test 
+//		ctx.writeAndFlush("");
+		
 	}
 	
 	@Override
@@ -39,10 +41,10 @@ public class ClientHandler extends ChannelInboundHandlerAdapter{
 
 		mainLoop(ctx);
 	}
-
+	
 	@Override
-	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-		System.out.println(msg.toString());
+	protected void channelRead0(ChannelHandlerContext ctx, Command cmd) throws Exception {
+		// TODO Auto-generated method stub
 		
 	}
 	
@@ -66,7 +68,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter{
 					System.out.print(" ------------ NChat에 오신것을 환영합니다 ------------ \r\n");
 					System.out.print(" ----------------------------------------------- \r\n");
 					content = setUserName();
-					Command cmd = new SetNickName(content);
+					Command cmd = new SetUserName(content);
 					sendToServer(ctx, cmd);
 					waitingRoomLoop(ctx);
 //					if (cmd instanceof SetNickName) {
@@ -99,6 +101,9 @@ public class ClientHandler extends ChannelInboundHandlerAdapter{
 				String line = br.readLine();
 				try {
 					option = Integer.parseInt(line);
+					if(!(option>=0 && option<7)) {
+						System.out.println("주어진 옵션의 숫자만 입력해 주시기 바랍니다.");
+					}
 				}catch(NumberFormatException e) {
 					System.out.println("주어진 옵션의 숫자만 입력해 주시기 바랍니다.");
 					continue;
@@ -107,7 +112,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter{
 				e.printStackTrace();
 				isShutdown = true;
 			}
-			if(option>=0) {
+			if(option>=0 && option<7) {
 				switch(option) {
 //				case 1 : enterRoomRequest(ctx); break;
 //				case 2 : createRoomRequest(ctx); break; 
@@ -115,10 +120,11 @@ public class ClientHandler extends ChannelInboundHandlerAdapter{
 //				case 4 : waitingRoomUsersRequest(ctx); break;
 //				case 5 : privateMessage(ctx); break;
 //				case 6 : accountInfo(ctx); break;
-				case 0 : programExitRequest(ctx); break;
+				case 0 : programExitRequest(ctx);
+				default : continue;
 				}
 			}
-		}while(isShutdown);
+		}while(!isShutdown);
 	}
 	
 	
@@ -176,22 +182,33 @@ public class ClientHandler extends ChannelInboundHandlerAdapter{
     
     private void sendToServer(ChannelHandlerContext ctx, Command cmd) {
     	ChannelFuture future =  ctx.writeAndFlush(cmd);
-    	future.addListener(new ChannelFutureListener() {
-			@Override
-			public void operationComplete(ChannelFuture future) throws Exception {
-				if(future.isSuccess()) {
-					System.out.println("서버에게 요청을 보냈습니다.");
-				}else {
-					System.out.println("서버에게 요청을 보내는데 실패했습니다. 다시한번 시도해 주시기 바랍니다.");
-				}
-			}
-		});
+//    	future.addListener(new ChannelFutureListener() {
+//			@Override
+//			public void operationComplete(ChannelFuture future) throws Exception {
+//				if(future.isSuccess()) {
+//					System.out.println("서버에게 요청을 보냈습니다.");
+//				}else {
+//					System.out.println("서버에게 요청을 보내는데 실패했습니다. 다시한번 시도해 주시기 바랍니다.");
+//				}
+//			}
+//		});
     }
     
     private void programExitRequest(ChannelHandlerContext ctx) {
-    	Command cmd = new ProgramExitRequest();
-    	sendToServer(ctx, cmd);
+    	ChannelFuture future = ctx.channel().close();
+    	future.addListener(new ChannelFutureListener() {
+    		@Override
+    		public void operationComplete(ChannelFuture future) throws Exception {
+    			if(future.isSuccess()) {
+    				System.exit(-1);
+    			}else {
+    				System.out.println("프로그램 종료 중 에러가 발생했습니다. 다시한번 시도하여 주시기 바랍니다.");
+    			}
+    		}
+    	});
     }
+
+
     
     
 

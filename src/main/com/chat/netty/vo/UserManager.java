@@ -2,12 +2,12 @@ package com.chat.netty.vo;
 
 import java.util.Map;
 
-public class AllUserInfo {
+public class UserManager {
 	
 	private Map<String, UserInfo> usersInChatRoom;
 	private Map<String, UserInfo> usersInWaitingRoom;
 	
-	public AllUserInfo() {
+	public UserManager() {
 		// TODO Auto-generated constructor stub
 	}
 

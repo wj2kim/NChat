@@ -1,17 +1,19 @@
 package com.chat.netty.vo;
 
+import io.netty.channel.ChannelHandlerContext;
+
 public class UserInfo {
 	
 	private String userName;
-	private String userId;
+	private ChannelHandlerContext ctx;
+	
 	
 	public UserInfo() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public UserInfo(String userName, String userId) {
-		this.userName = userName;
-		this.userId = userId;
+	public UserInfo(ChannelHandlerContext ctx) {
+		this.ctx = ctx;
 	}
 	
 	public String getUserName() {
@@ -22,14 +24,13 @@ public class UserInfo {
 		this.userName = userName;
 	}
 
-	public String getUserId() {
-		return userId;
+	public ChannelHandlerContext getCtx() {
+		return ctx;
 	}
 
-	public void setUserId(String userId) {
-		this.userId = userId;
+	public void setCtx(ChannelHandlerContext ctx) {
+		this.ctx = ctx;
 	}
-
 
 	@Override
 	public String toString() {

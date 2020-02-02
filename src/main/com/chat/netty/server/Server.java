@@ -77,7 +77,7 @@ public class Server {
 					LOGGER.info("서버를 종료합니다.");
 					bossLoopGroup.shutdownGracefully().sync();
 					pool.shutdown();
-					pool.awaitTermination(5, TimeUnit.SECONDS);
+					pool.awaitTermination(3, TimeUnit.SECONDS);
 				}catch(InterruptedException e) {
 					LOGGER.error("서버를 종료하는 도중 에러가 발생했습니다.", e);
 				}		

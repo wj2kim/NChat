@@ -54,7 +54,7 @@ public class Client {
 		
 		try {
 			future.channel().closeFuture().sync();
-			LOGGER.info("서버와의 연결을 종료합니다.");
+			System.out.println("서버와의 연결이 끊겼습니다. 프로그램을 종료합니다.");
 			shutdown();
 		}catch(InterruptedException e) {
 			LOGGER.error("InterruptedException msg", e);
@@ -65,7 +65,8 @@ public class Client {
 		try {
 			workerLoopGroup.shutdownGracefully().sync();
 			pool.shutdown();
-			pool.awaitTermination(5, TimeUnit.SECONDS);
+			pool.awaitTermination(3, TimeUnit.SECONDS); 
+			System.exit(-1);
 		}catch(InterruptedException e) {
 			LOGGER.error("InterruptedException msg",e);
 		}
