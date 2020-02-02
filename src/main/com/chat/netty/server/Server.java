@@ -22,11 +22,11 @@ public class Server {
 	private static final Logger LOGGER = Logger.getLogger(Server.class.getName());
 	
 	private final ExecutorService pool = Executors.newCachedThreadPool();
-	private Runnable shutdownServer;
 	
-	ServerBootstrap sBoot;
-	NioEventLoopGroup bossLoopGroup;
-	NioEventLoopGroup workerLoopGroup;
+	private Runnable shutdownServer;
+	private ServerBootstrap sBoot;
+	private NioEventLoopGroup bossLoopGroup;
+	private NioEventLoopGroup workerLoopGroup;
 	
 	
 	public Server() {

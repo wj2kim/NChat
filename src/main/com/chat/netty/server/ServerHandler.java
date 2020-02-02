@@ -1,9 +1,13 @@
 package com.chat.netty.server;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.log4j.Logger;
 
+import com.chat.netty.vo.NChatManager;
+import com.chat.netty.vo.RoomInfo;
 import com.chat.netty.vo.UserInfo;
 
 import io.netty.channel.Channel;
@@ -20,6 +24,7 @@ public class ServerHandler extends ChannelInboundHandlerAdapter{
 	
 	private ExecutorService pool;
 	private Runnable shutdownServer;
+	private NChatManager manager = new NChatManager();
 	
 	
 	public ServerHandler(ExecutorService pool, Runnable shutdownServer) {
@@ -98,10 +103,18 @@ public class ServerHandler extends ChannelInboundHandlerAdapter{
 	}
 	
 	private boolean isUserNameTaken(Object msg) {
-		// ChatManager을 이용해 닉네임 중복 체크
-//		if(manager.getAllUsers().isEmpty() || !manager.getAllUsers.containsKey(msg)) {
+//		ChatManager을 이용해 닉네임 중복 체크
+//		if(manager.getAllUsers().isEmpty() || !manager.getAllUsers().get("")) {
 //			return true;
 //		}
+		RoomInfo room = new RoomInfo();
+		room.setRoomId(1);
+		room.setRoomName("어서 오세요");
+		Map <String, RoomInfo> allRooms = new HashMap<String, RoomInfo>();
+		allRooms.put(room.getRoomName(), room);
+		manager.setAllRooms(allRooms);
+		
+		
 		return false;
 	}
 	

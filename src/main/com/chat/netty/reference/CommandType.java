@@ -2,8 +2,8 @@ package com.chat.netty.reference;
 
 public enum CommandType {
 	
-	SET_NICKNAME("setNickName"),
-	EXIT("exit"),
+	SET_USERNAME("setUserName"),
+	PROGRAM_EXIT("exit"),
 	CREATE_ROOM("createRoom"),
 	ENTER_ROOM("enterRoom"),
 	EXIT_ROOM("exitRoom"),

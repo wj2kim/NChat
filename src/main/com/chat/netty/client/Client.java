@@ -1,18 +1,11 @@
 package com.chat.netty.client;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
-
-import com.chat.netty.vo.UserInfo;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -21,19 +14,15 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import io.netty.handler.codec.Delimiters;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
 
 public class Client {
 	private static final int PORT = 8888;
 	
 	private static final Logger LOGGER = Logger.getLogger(Client.class.getName());
 	
-	private Bootstrap boot;
-	private NioEventLoopGroup workerLoopGroup = new NioEventLoopGroup();
 	private final ExecutorService pool = Executors.newCachedThreadPool();
+	private NioEventLoopGroup workerLoopGroup;
+	private Bootstrap boot;
 
 	
 	public Client() {
@@ -47,6 +36,7 @@ public class Client {
 			}
 		};
 		boot = new Bootstrap();
+		workerLoopGroup = new NioEventLoopGroup();
 		boot.group(workerLoopGroup).channel(NioSocketChannel.class).handler(initializer);
 	}
 	
