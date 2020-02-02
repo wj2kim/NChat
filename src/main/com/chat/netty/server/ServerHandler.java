@@ -5,7 +5,9 @@ import java.util.concurrent.ExecutorService;
 import org.apache.log4j.Logger;
 
 import com.chat.netty.reference.Command;
+import com.chat.netty.reference.FalseResponse;
 import com.chat.netty.reference.SetUserName;
+import com.chat.netty.reference.TrueResponse;
 import com.chat.netty.vo.NChatManager;
 import com.chat.netty.vo.UserInfo;
 
@@ -79,11 +81,15 @@ public class ServerHandler extends SimpleChannelInboundHandler<Command>{
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, Command cmd) throws Exception {
 		// TODO Auto-generated method stub
-		LOGGER.info("클라이언트로 부터 요청받음 : "+ cmd);
+		LOGGER.info("클라이언트로 부터 요청받음 : "+ cmd.toString());
+		LOGGER.info("클라이언트로 부터 요청받음 : "+ cmd.getCommandType());
+		LOGGER.info("클라이언트로 부터 요청받음 : "+ cmd.getContent());
 		
 		UserInfo userInfo = ctx.channel().attr(user).get();
 		
 		if(cmd instanceof SetUserName) {
+			System.out.println("userInfo : "+userInfo.toString());
+			System.out.println("userInfo : "+userInfo.getCtx());
 			setUserName(userInfo, cmd);
 		}
 		
@@ -128,22 +134,26 @@ public class ServerHandler extends SimpleChannelInboundHandler<Command>{
 	}
 	
 	private void setUserName(UserInfo userInfo, Command cmd) {
+		ChannelHandlerContext ctx = userInfo.getCtx();
 		if(isUserNameTaken(cmd)) {
-			// 중
+			// 중복
 			// 클라이언트에게 사용중이라 응답 보내기 
+			cmd = new FalseResponse("nameAlreadyExist","");
 		}else {
 			// 서버에 유저 정보 저장하고 
 			// 클라이언트에게 처리 완료 응답 보내기
 			userInfo.setUserName(cmd.getContent());
 			manager.getAllUsers().put(cmd.getContent(), userInfo);
-			LOGGER.info("IP주소가 "+userInfo.getCtx().channel().remoteAddress()+"인 사용자가 닉네임을 등록했습니다. 닉네임 : " + cmd.getContent());
+			LOGGER.info("IP주소가 "+ctx.channel().remoteAddress()+"인 사용자가 닉네임을 등록했습니다. 닉네임 : " + cmd.getContent());
+			cmd = new TrueResponse("nameSet","");
 		}
+		ctx.writeAndFlush(cmd);
 	}
 	
 	private boolean isUserNameTaken(Command cmd) {
 //		ChatManager을 이용해 닉네임 중복 체크
-		if(manager.getAllUsers().isEmpty() ||
-					!manager.getAllUsers().containsKey(cmd.getContent())) {
+		if(manager.getAllUsers()==null || manager.getAllUsers().isEmpty()) {
+//					! manager.getAllUsers().containsKey(cmd.getContent())) {
 			return false;
 		}
 		return true;
@@ -160,9 +170,9 @@ public class ServerHandler extends SimpleChannelInboundHandler<Command>{
 //		return false;
 //	}
 	
-	private void sendResponse() {
-		
-	}
+//	private void sendToClient(ChannelHandlerContext ctx, Command cmd) {
+//		ctx.writeAndFlush(cmd);
+//	}
 
 
 	

@@ -1,7 +1,7 @@
 package com.chat.netty.reference;
 
 public enum CommandType {
-	
+	// client -> Server 
 	SET_USERNAME("setUserName"),
 	PROGRAM_EXIT("exit"),
 	CREATE_ROOM("createRoom"),
@@ -16,7 +16,14 @@ public enum CommandType {
 	GET_USERLIST("getUserList"),
 	GET_WAITINGROOM_USERLIST("getWaitingRoomUserList"),
 	SEND_MESSAGE("sendMessage"),
-	ACCOUNT_INFO("accountInfo")
+	ACCOUNT_INFO("accountInfo"),
+	
+	// Server -> Client (false)
+	NAME_AlREADY_EXIST("nameAlreadyExist"),
+	
+	// Server -> CLient (true)
+	NAME_SET("nameSet")
+	
 	;
 	
 	private final String type;

@@ -14,6 +14,9 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.serialization.ClassResolvers;
+import io.netty.handler.codec.serialization.ObjectDecoder;
+import io.netty.handler.codec.serialization.ObjectEncoder;
 
 public class Client {
 	private static final int PORT = 8888;
@@ -32,6 +35,8 @@ public class Client {
 //				ch.pipeline().addLast(new DelimiterBasedFrameDecoder(3000, Delimiters.lineDelimiter()));
 //				ch.pipeline().addLast(new StringEncoder());
 //				ch.pipeline().addLast(new StringDecoder());
+				ch.pipeline().addLast(new ObjectEncoder());
+				ch.pipeline().addLast(new ObjectDecoder(ClassResolvers.softCachingResolver(ClassLoader.getSystemClassLoader())));
 				ch.pipeline().addLast(new ClientHandler(pool));
 			}
 		};
@@ -46,6 +51,7 @@ public class Client {
 			@Override
 			public void operationComplete(ChannelFuture future) throws Exception {
 				if(future.isSuccess()) {
+					System.out.println("서버와의 연결에 성공했습니다.");
 				}else {
 					LOGGER.error("서버와의 연결에 실패했습니다. 다시 한번 시도해 주시기 바랍니다.",future.cause());
 				}

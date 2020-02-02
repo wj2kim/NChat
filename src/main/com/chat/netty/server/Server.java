@@ -16,6 +16,9 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.serialization.ClassResolvers;
+import io.netty.handler.codec.serialization.ObjectDecoder;
+import io.netty.handler.codec.serialization.ObjectEncoder;
 
 public class Server {
 	private static final int PORT = 8888;
@@ -39,6 +42,8 @@ public class Server {
 //				ch.pipeline().addLast(new DelimiterBasedFrameDecoder(3000,Delimiters.lineDelimiter()));
 //				ch.pipeline().addLast(new StringDecoder());
 //				ch.pipeline().addLast(new StringEncoder());
+				ch.pipeline().addLast(new ObjectEncoder());
+				ch.pipeline().addLast(new ObjectDecoder(ClassResolvers.softCachingResolver(ClassLoader.getSystemClassLoader())));ch.pipeline().addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
 				ch.pipeline().addLast(new ServerHandler(pool, shutdownServer));
 			}
 		};

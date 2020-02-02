@@ -8,12 +8,14 @@ import java.util.concurrent.ExecutorService;
 import org.apache.log4j.Logger;
 
 import com.chat.netty.reference.Command;
+import com.chat.netty.reference.CommandType;
+import com.chat.netty.reference.FalseResponse;
 import com.chat.netty.reference.SetUserName;
+import com.chat.netty.reference.TrueResponse;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
@@ -33,18 +35,33 @@ public class ClientHandler extends SimpleChannelInboundHandler<Command>{
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		//test 
 //		ctx.writeAndFlush("");
-		
+		welcomeScreen(ctx);
 	}
 	
 	@Override
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
 
-		mainLoop(ctx);
+//		welcomeScreen(ctx);
 	}
 	
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, Command cmd) throws Exception {
 		// TODO Auto-generated method stub
+		if(cmd instanceof FalseResponse) {
+			if(cmd.getCommandType() == CommandType.NAME_AlREADY_EXIST ) {
+				System.out.println("해당 닉네임은 이미 사용중입니다.");
+				welcomeScreen(ctx);
+//				progressOrNot(false);
+			}
+		}
+		
+		if(cmd instanceof TrueResponse) {
+			if(cmd.getCommandType() == CommandType.NAME_SET) {
+				System.out.println("해당 닉네임으로 계정이 생성됬습니다. 대기실로 이동합니다.");
+				mainLoop(ctx);
+//				progressOrNot(true);
+			}
+		}
 		
 	}
 	
@@ -55,13 +72,13 @@ public class ClientHandler extends SimpleChannelInboundHandler<Command>{
 	}
 	
 	
-	public void mainLoop(ChannelHandlerContext ctx) {
-		pool.execute(new Runnable() {
-			@Override
-			public void run() {
-				boolean isShutdown = false;
+	public void welcomeScreen(ChannelHandlerContext ctx) {
+//		pool.execute(new Runnable() {
+//			@Override
+//			public void run() {
+//				boolean isShutdown = false;
 				String content;
-				do {
+//				do {
 //					welcome screen
 					System.out.println();
 					System.out.print(" ----------------------------------------------- \r\n");
@@ -70,18 +87,22 @@ public class ClientHandler extends SimpleChannelInboundHandler<Command>{
 					content = setUserName();
 					Command cmd = new SetUserName(content);
 					sendToServer(ctx, cmd);
-					waitingRoomLoop(ctx);
+//					if(progreeOrNot() == false) {
+//						continue;
+//					}
+					// 서버에서 로직 처리가 완료됬다는 응답이 오면 다음 단계로 넘어가야하는데 어떻게 할까?
+//					mainLoop(ctx);
 //					if (cmd instanceof SetNickName) {
 //						System.out.println("content : "+cmd.getContent());
 //						System.out.println("content : "+cmd.getCommandType());
 //					}
 //					서버로 request 한 후 
-				}while(!isShutdown);
-			}
-		});
+//				}while(!isShutdown);
+//			}
+//		});
 	}
 	
-	private void waitingRoomLoop(ChannelHandlerContext ctx) {
+	private void mainLoop(ChannelHandlerContext ctx) {
 		boolean isShutdown = false;
 		do {
 			System.out.println();
@@ -182,16 +203,21 @@ public class ClientHandler extends SimpleChannelInboundHandler<Command>{
     
     private void sendToServer(ChannelHandlerContext ctx, Command cmd) {
     	ChannelFuture future =  ctx.writeAndFlush(cmd);
-//    	future.addListener(new ChannelFutureListener() {
-//			@Override
-//			public void operationComplete(ChannelFuture future) throws Exception {
-//				if(future.isSuccess()) {
-//					System.out.println("서버에게 요청을 보냈습니다.");
-//				}else {
-//					System.out.println("서버에게 요청을 보내는데 실패했습니다. 다시한번 시도해 주시기 바랍니다.");
-//				}
-//			}
-//		});
+    	future.addListener(new ChannelFutureListener() {
+			@Override
+			public void operationComplete(ChannelFuture future) throws Exception {
+				if(future.isSuccess()) {
+					System.out.println("서버에게 요청을 보냈습니다.");
+				}else {
+					System.out.println("서버에게 요청을 보내는데 실패했습니다. 다시한번 시도해 주시기 바랍니다.");
+				}
+			}
+		});
+    	try {
+			future.sync();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
     }
     
     private void programExitRequest(ChannelHandlerContext ctx) {
@@ -207,6 +233,11 @@ public class ClientHandler extends SimpleChannelInboundHandler<Command>{
     		}
     	});
     }
+    
+//    private static boolean progressOrNot(boolean flag) {
+//   
+//    	return flag;
+//    }
 
 
     
