@@ -1,6 +1,6 @@
 # NChat
 
-< On Progress >
+< On Progress ... >
 
 Simple chat application (Server and Client) using Netty Framework and Java.
 
