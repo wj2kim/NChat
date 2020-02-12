@@ -7,6 +7,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import com.chat.netty.codec.CommandCodec;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
@@ -14,6 +16,8 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.group.ChannelGroup;
+import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
@@ -31,6 +35,7 @@ public class Server {
 	private NioEventLoopGroup bossLoopGroup;
 	private NioEventLoopGroup workerLoopGroup;
 	
+
 	
 	public Server() {
 		sBoot = new ServerBootstrap();
@@ -44,6 +49,7 @@ public class Server {
 //				ch.pipeline().addLast(new StringEncoder());
 				ch.pipeline().addLast(new ObjectEncoder());
 				ch.pipeline().addLast(new ObjectDecoder(ClassResolvers.softCachingResolver(ClassLoader.getSystemClassLoader())));ch.pipeline().addLast(new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
+//				ch.pipeline().addLast(new CommandCodec());
 				ch.pipeline().addLast(new ServerHandler(pool, shutdownServer));
 			}
 		};

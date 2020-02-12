@@ -1,18 +1,16 @@
 package com.chat.netty.server;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.log4j.Logger;
 
 import com.chat.netty.reference.Message;
-import com.chat.netty.reference.FalseResponse;
+import com.chat.netty.reference.NegativeResponse;
+import com.chat.netty.reference.PositiveResponse;
 import com.chat.netty.reference.SetUserName;
-import com.chat.netty.reference.TrueResponse;
 import com.chat.netty.vo.NChatManager;
-import com.chat.netty.vo.RoomInfo;
 import com.chat.netty.vo.UserInfo;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -28,7 +26,9 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message>{
 	private static final ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 	
 	private final AttributeKey <UserInfo> user = AttributeKey.valueOf("userInfo");
-	
+	private static final HashMap<String,ChannelGroup> channelmap=new HashMap<String,ChannelGroup>(); 
+
+	private ChannelGroup chGroup;
 	private ExecutorService pool;
 	private Runnable shutdownServer;
 	
@@ -96,6 +96,14 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message>{
 			setUserName(userInfo, msg);
 		}
 		
+		if(!channelmap.containsKey(msg.getContent())) {
+			chGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+			// chGroup 을 포함한 방 정보 객체를 만들어야 할 것 같다. 
+			channelmap.put("방의 키값", chGroup);
+			// channelmap 에 해당 key 가 없으면 
+		}
+		
+		
 	}
 	
 		
@@ -143,7 +151,7 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message>{
 				ChannelHandlerContext ctx = userInfo.getCtx();
 				if(isUserNameTaken(msg)) {
 					// 중복 - 클라이언트에게 사용중이라 응답 보내기 
-					ctx.writeAndFlush(new FalseResponse("nameAlreadyExist",""));
+					ctx.writeAndFlush(new NegativeResponse("nameAlreadyExist",""));
 				}else {
 					// 서버에 유저 정보 저장하고 클라이언트에게 처리 완료 응답 보내기
 					userInfo.setUserName(msg.getContent());
@@ -152,7 +160,18 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message>{
 //					allUsers.put(userInfo.getUserName(), userInfo);
 //					manager.getAllUsers().put(cmd.getContent(), userInfo);
 					LOGGER.info("IP주소가 "+ctx.channel().remoteAddress()+"인 사용자가 닉네임을 등록했습니다. 닉네임 : " + msg.getContent());
-					ctx.writeAndFlush(new TrueResponse("nameSet",""));
+//					String [] contents = {"hello","world","I am", "Paul"};
+//					List<String> strList = new ArrayList<String>();
+//					strList.add("hello");
+//					strList.add("world");
+//					strList.add("I am");
+//					strList.add("Paul");
+					Map<String, String>strMap = new HashMap<String, String>();
+					strMap.put("Paul", "asdf");
+					strMap.put("John", "plfkksdfdf");
+					strMap.put("Will", "kfokokdf");
+					
+					ctx.writeAndFlush(new PositiveResponse("nameSet","", strMap));
 				}
 				manager.printAllUsers();
 			}

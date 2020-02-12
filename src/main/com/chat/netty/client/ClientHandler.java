@@ -3,15 +3,18 @@ package com.chat.netty.client;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.log4j.Logger;
 
 import com.chat.netty.reference.Message;
 import com.chat.netty.reference.MessageType;
-import com.chat.netty.reference.FalseResponse;
+import com.chat.netty.reference.NegativeResponse;
+import com.chat.netty.reference.PositiveResponse;
 import com.chat.netty.reference.SetUserName;
-import com.chat.netty.reference.TrueResponse;
+import com.chat.netty.vo.UserInfo;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -47,7 +50,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message>{
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
 		// TODO Auto-generated method stub
-		if(msg instanceof FalseResponse) {
+		if(msg instanceof NegativeResponse) {
 			if(msg.getCommandType() == MessageType.NAME_AlREADY_EXIST ) {
 				System.out.println("해당 닉네임은 이미 사용중입니다.");
 				welcomeScreen(ctx);
@@ -55,9 +58,36 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message>{
 			}
 		}
 		
-		if(msg instanceof TrueResponse) {
+		if(msg instanceof PositiveResponse) {
 			if(msg.getCommandType() == MessageType.NAME_SET) {
 				System.out.println("해당 닉네임으로 계정이 생성됬습니다. 대기실로 이동합니다.");
+				
+//				UserInfo userInfo = new UserInfo();
+//				if(((PositiveResponse) msg).getUserInfo() instanceof UserInfo) {
+//					userInfo = ((PositiveResponse) msg).getUserInfo();					
+//					System.out.println("userInfo : "+userInfo.getUserName());
+//					System.out.println("userInfo : "+userInfo.getCtx());					
+//				}
+//				ArrayList<String>list = ((PositiveResponse) msg).getList();
+//				for(String al : list) {
+//					System.out.println("list 도 오냐? : "+al);
+//				}
+				Map<String,String>strMap = ((PositiveResponse) msg).getStrMap();
+				
+		        Iterator<String> mapIter = strMap.keySet().iterator();
+		        while(mapIter.hasNext()){
+		 
+		            String key = mapIter.next();
+		            String value = strMap.get( key );
+		 
+		            System.out.println(key+" : "+value);
+		 
+		        }
+				
+//				String [] contents = ((PositiveResponse) msg).getContents();
+//				for(int i = 0; i<contents.length; i++) {
+//					System.out.println("String 배열이 온다!!! : "+contents[i]);					
+//				}
 				mainLoop(ctx);
 //				progressOrNot(true);
 			}
@@ -135,7 +165,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message>{
 			}
 			if(option>=0 && option<7) {
 				switch(option) {
-//				case 1 : enterRoomRequest(ctx); break;
+				case 1 : chatTestByRoom(ctx); break;
 //				case 2 : createRoomRequest(ctx); break; 
 //				case 3 : allUsersRequest(ctx); break;
 //				case 4 : waitingRoomUsersRequest(ctx); break;
@@ -238,6 +268,20 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message>{
 //   
 //    	return flag;
 //    }
+    
+    private void chatTestByRoom(ChannelHandlerContext ctx) {
+    	do {
+    		 BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    	     String line = "";
+    	     try {
+				line = br.readLine();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	     
+    	}while(true);
+    }
 
 
     
