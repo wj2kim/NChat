@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 
@@ -14,7 +16,6 @@ import com.chat.netty.reference.MessageType;
 import com.chat.netty.reference.NegativeResponse;
 import com.chat.netty.reference.PositiveResponse;
 import com.chat.netty.reference.SetUserName;
-import com.chat.netty.vo.UserInfo;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -22,6 +23,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.channel.unix.Socket;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
 public class ClientHandler extends SimpleChannelInboundHandler<Message>{
@@ -133,6 +135,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message>{
 	}
 	
 	private void mainLoop(ChannelHandlerContext ctx) {
+//		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		boolean isShutdown = false;
 		do {
 			System.out.println();
@@ -269,22 +272,84 @@ public class ClientHandler extends SimpleChannelInboundHandler<Message>{
 //    	return flag;
 //    }
     
-    private void chatTestByRoom(ChannelHandlerContext ctx) {
-    	do {
-    		 BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-    	     String line = "";
-    	     try {
-				line = br.readLine();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-    	     
-    	}while(true);
-    }
-
-
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    String line = "";
     
+    private void chatTestByRoom(ChannelHandlerContext ctx) {
+    	
+    	pool.execute(new Runnable() {
+			@Override
+			public void run() {
+				System.out.println("입력하시오.");
+			     try {
+						line = br.readLine();
+						System.out.println("되면 안되는 곳 " + line);
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+			}
+		});
+
+		pool.execute(new Runnable() {
+			@Override
+			public void run() {
+				System.out.println("runnable 실행");
+    			try {
+//    				System.out.flush();
+//					System.out.close();
+    				
+				    testMethod();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
+		try {
+			line = br.readLine();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    
+
+//    	}while(true);
+    }
+    
+//    private String interruptibleReadLine(BufferedReader reader)
+//            throws InterruptedException, IOException {
+//        Pattern line = Pattern.compile("^(.*)\\R");
+//        Matcher matcher;
+//        boolean interrupted = false;
+//
+//        StringBuilder result = new StringBuilder();
+//        int chr = -1;
+//        do {
+//            if (reader.ready()) chr = reader.read();
+//            if (chr > -1) result.append((char) chr);
+//            matcher = line.matcher(result.toString());
+//            interrupted = Thread.interrupted(); // resets flag, call only once
+//        } while (!interrupted && !matcher.matches());
+//        if (interrupted) throw new InterruptedException();
+//        return (matcher.matches() ? matcher.group(1) : "");
+//    }
+
+
+    private void testMethod(){
+    	
+    	  System.out.println("이걸로 바로 오고 " + line);
+    	 do {
+    		 BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    		 try {
+    			 String line  = br.readLine();
+    			 System.out.println("여기 얘만 오면 진짜 성공이야!!" + line);	 
+    		 } catch (IOException e) {
+    			 // TODO Auto-generated catch block
+    			 e.printStackTrace();
+    		 }
+    	 }while(true);
+    }
     
 
 	

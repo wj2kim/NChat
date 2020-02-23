@@ -1,5 +1,7 @@
 package com.chat.netty.vo;
 
+import java.util.Date;
+
 import io.netty.channel.ChannelHandlerContext;
 
 public class UserInfo {
@@ -7,13 +9,16 @@ public class UserInfo {
 	private String userName;
 	private ChannelHandlerContext ctx;
 	
+	private Date userCreationDate;
+	
 	
 	public UserInfo() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public UserInfo(ChannelHandlerContext ctx) {
+	public UserInfo(ChannelHandlerContext ctx, Date userCreationDate) {
 		this.ctx = ctx;
+		this.userCreationDate = userCreationDate;
 	}
 	
 	public String getUserName() {
@@ -30,6 +35,10 @@ public class UserInfo {
 
 	public void setCtx(ChannelHandlerContext ctx) {
 		this.ctx = ctx;
+	}
+	
+	public Date getUserCreationDate() {
+		return userCreationDate;
 	}
 
 	@Override

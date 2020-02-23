@@ -1,5 +1,6 @@
 package com.chat.netty.server;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -46,8 +47,10 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message>{
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		// Channel이 활성화 될때 마다 UserInfo와 연결짓기.
-		ctx.channel().attr(user).set(new UserInfo(ctx));
+		Date creationDate = new Date();
+		ctx.channel().attr(user).set(new UserInfo(ctx, creationDate));
 		UserInfo userInfo = ctx.channel().attr(user).get();
+		System.out.println(userInfo.getUserName() + " 생성 날짜 : " +userInfo.getUserCreationDate() );
 		super.channelActive(ctx);
 	}
 	
