@@ -12,13 +12,14 @@ public class UserInfo {
 	private Date userCreationDate;
 	
 	
-	public UserInfo() {
-		// TODO Auto-generated constructor stub
+	public UserInfo(String userName) {
+		this.userName = userName;
 	}
 
-	public UserInfo(ChannelHandlerContext ctx, Date userCreationDate) {
+	public UserInfo(ChannelHandlerContext ctx) {
+		Date today = new Date();
+		userCreationDate = today;
 		this.ctx = ctx;
-		this.userCreationDate = userCreationDate;
 	}
 	
 	public String getUserName() {
@@ -36,7 +37,7 @@ public class UserInfo {
 	public void setCtx(ChannelHandlerContext ctx) {
 		this.ctx = ctx;
 	}
-	
+
 	public Date getUserCreationDate() {
 		return userCreationDate;
 	}

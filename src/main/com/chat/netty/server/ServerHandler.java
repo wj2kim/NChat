@@ -1,140 +1,100 @@
 package com.chat.netty.server;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
+import static com.chat.netty.server.RequestListener.manager;
+import static com.chat.netty.server.RequestListener.responseFactory;
+import static com.chat.netty.server.RequestListener.user;
 
 import org.apache.log4j.Logger;
 
-import com.chat.netty.reference.Message;
-import com.chat.netty.reference.NegativeResponse;
-import com.chat.netty.reference.PositiveResponse;
-import com.chat.netty.reference.SetUserName;
-import com.chat.netty.vo.NChatManager;
+import com.chat.netty.reference.PacketFactory;
+import com.chat.netty.reference.PacketIntegration;
+import com.chat.netty.reference.TemporaryPacketStorage;
+import com.chat.netty.vo.RoomInfo;
 import com.chat.netty.vo.UserInfo;
 
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelId;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.AttributeKey;
-import io.netty.util.concurrent.GlobalEventExecutor;
 
-public class ServerHandler extends SimpleChannelInboundHandler<Message>{
+public class ServerHandler extends SimpleChannelInboundHandler<byte[]>{
 	
 	private static final Logger LOGGER = Logger.getLogger(ServerHandler.class.getName());
-	private static final ChannelGroup channelGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
-	
-	private final AttributeKey <UserInfo> user = AttributeKey.valueOf("userInfo");
-	private static final HashMap<String,ChannelGroup> channelmap=new HashMap<String,ChannelGroup>(); 
 
-	private ChannelGroup chGroup;
-	private ExecutorService pool;
-	private Runnable shutdownServer;
+	PacketIntegration integration = new PacketIntegration();
+	TemporaryPacketStorage storage = new TemporaryPacketStorage();
+	private String userName="";
 	
-	private NChatManager manager = new NChatManager();
-//	private AllUsers allUsers  = new AllUsers();
-//	private UserManager userManager = new UserManager();
-//	AllUsers allUsers = (AllUsers) allu;
-	
-	
-	public ServerHandler(ExecutorService pool, Runnable shutdownServer) {
-		this.pool = pool;
-		this.shutdownServer = shutdownServer;
+	public ServerHandler() {
+		
 	}
 	
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		// Channel이 활성화 될때 마다 UserInfo와 연결짓기.
-		Date creationDate = new Date();
-		ctx.channel().attr(user).set(new UserInfo(ctx, creationDate));
-		UserInfo userInfo = ctx.channel().attr(user).get();
-		System.out.println(userInfo.getUserName() + " 생성 날짜 : " +userInfo.getUserCreationDate() );
-		super.channelActive(ctx);
+		// Channel이 활성화 될때 마다 UserInfo 초기화 해서 세팅해주기
+		ctx.channel().attr(user).set(new UserInfo(ctx));
+		
+		// broadcast 용. 해당 채널 globalChannel 에 등록
+		manager.getGlobalChannel().add(ctx.channel());
 	}
 	
 	@Override
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-		LOGGER.info("IP주소가 " + ctx.channel().remoteAddress()+" 인 사용자가 서버에 접속했습니다.");
-		
-		
-//		for(Channel ch : channelGroup) {
-//			ch.write(incomming.remoteAddress()+" 님이 입장했습니다.");
-//		}
-//		channelGroup.add(incomming);
+		LOGGER.info("IP:포트 주소 [ " + ctx.channel().remoteAddress()+" ] - 서버에 접속 ");
 	}
+	
 	
 	@Override
 	public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-		// 사용자가 ProgramExit 을 했을때 무조건 여기로 옴 
-		
-//		UserInfo userInfo = channelInfo.getUserInfo();
-////	if(userInfo != null) {
-////	ChannelInfo 에서 UserInfo를 가지고 와서 이벤트 처리 
-////	UserManager.userExit(userinfo.getUserName());
-////	channelInfo.setUserInfo(null);
-		
-		UserInfo userInfo = ctx.channel().attr(user).get();
-		manager.removeUser(userInfo);
-		
-		LOGGER.info("IP주소가 " + ctx.channel().remoteAddress()+" 인 사용자가 서버에서 나갔습니다.");
+		String userName = ctx.channel().attr(user).get().getUserName();
+		RoomInfo roomInfo = (RoomInfo) ctx.channel().attr(AttributeKey.valueOf("roomInfo")).get();
+		if(roomInfo!=null && roomInfo.getRoomMaster().equals(userName)) { // 방장일 경우
+			manager.removeRoom(roomInfo);			
+		}
+		if(roomInfo!=null && roomInfo.getUsersInRoom().containsKey(userName)){ // 방에 있는 일반 유저라면 
+			roomInfo.getUsersInRoom().remove(userName);
+		}
+		integration.remove(ctx.channel().id()); // integration 객체안에 있는 map에 값이 있다면 remove
 
-
-		
-//		for(Channel ch : channelGroup) {
-//			ch.write(incomming.remoteAddress()+" 님이 퇴장했습니다.");
-//		}
-//		channelGroup.remove(incomming);
+		// 매니저 객체에서 나가는 유저 정보 제거하기
+		manager.removeUser(userName);
+		// globalChannel 에서도 제거하기
+		manager.getGlobalChannel().remove(ctx.channel());
+		LOGGER.info("IP:포트 주소 [ " + ctx.channel().remoteAddress()+" ] 닉네임 [ " + userName + " ] - 서버와의 연결 해제 ");
 	}
+	
 	
 	@Override
-	protected void channelRead0(ChannelHandlerContext ctx, Message msg) throws Exception {
-		// TODO Auto-generated method stub
-		LOGGER.info("클라이언트로 부터 요청받음 : "+ msg.toString());
+	protected void channelRead0(ChannelHandlerContext ctx, byte [] packet) throws Exception {
+		long startTime = System.nanoTime();  // read가 시작되고 시간 counting 시작
+		ChannelId id = ctx.channel().id(); // 채널의 고유 아이디
 		
-		UserInfo userInfo = ctx.channel().attr(user).get();
+//		System.out.println("받은 패킷 사이즈 : " + packet.length);
+		if(integration.isExist(id)) { // motherPacket 이 세팅 되어있는 packet 은 이쪽으로.
+			integration.add(id, packet);
+			if(integration.isIntegrated(id)) { // 패킷이 완전하게 합쳐 졌다면
+				responseFactory(ctx, integration.getIntegratedPacket(id), startTime); // 통합 됬으면 next step 으로 가기.
+				return;
+			}
+			return;
+		}
+		PacketFactory factory = new PacketFactory(packet);
+		int packetSize = factory.getSize(); // 내부적으로 getShort 메소드를 이용해 2 byte 크기의 패킷 전체 길이 정보를 가져온다.
+		int packetId = factory.getId();
+		byte messageType = factory.getMessageType();
 		
-		if(msg instanceof SetUserName) {
-			setUserName(userInfo, msg);
+//		System.out.println("받아야하는 패킷 사이즈 : " + packetSize);
+		if(packetSize != packet.length) { // 받아야할 패킷 사이즈와 받은 패킷 사이즈를 비교
+			integration.setMotherPacket(id, packet, packetSize); //  없다면 해당 packet이 motherPacket
+			return;
 		}
 		
-		if(!channelmap.containsKey(msg.getContent())) {
-			chGroup = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
-			// chGroup 을 포함한 방 정보 객체를 만들어야 할 것 같다. 
-			channelmap.put("방의 키값", chGroup);
-			// channelmap 에 해당 key 가 없으면 
+		if(!(messageType == 19)) {  // store every messageType but chat message.
+			TemporaryPacketStorage.checkIdandStore(packetId, packet);
 		}
-		
-		
+		responseFactory(ctx, packet, startTime); // 완전하게 받은 패킷 바로 처리.
 	}
 	
-		
-
-//		ChannelInfo channelInfo = aCtx.channel().attr(ChannelListener.CHANNEL_INFO).get();
-		
-//		if(msg instanceof ProgramExitmsguest) {
-////			processExit(msg, channelInfo);
-//			processExit(ctx);
-//		}
-		
-		
-//		if(msg instanceof UserInfo) {
-//			LOGGER.info(((UserInfo) msg).getUserId()+ " : " +
-//			((UserInfo) msg).getUserName());
-//		}
-//		
-//		String message = null;
-//		message = (String)msg;		
-//		Channel incomming = ctx.channel();
-//		LOGGER.info("주고 받은 메시지 : " + incomming.remoteAddress() + " : "+ message);
-//		
-//		if(msg instanceof SetUserName) {
-//			boolean isUserNameTaken(msg);
-//			if(isUserNameTaken) {
-//				sendResponse(isUserNameTaken);
-//			}
-//		}
 	
 	@Override
 	public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
@@ -143,82 +103,9 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message>{
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-		cause.printStackTrace();
+		LOGGER.error("IP:포트 주소 [" +ctx.channel().remoteAddress() + " ] 닉네임 [ " + userName + " ] ServerHandler exception 에러", cause);
 		ctx.close();
 	}
-	
-	private void setUserName(final UserInfo userInfo, final Message msg) {
-		pool.execute(new Runnable() {
-			@Override
-			public void run() {
-				ChannelHandlerContext ctx = userInfo.getCtx();
-				if(isUserNameTaken(msg)) {
-					// 중복 - 클라이언트에게 사용중이라 응답 보내기 
-					ctx.writeAndFlush(new NegativeResponse("nameAlreadyExist",""));
-				}else {
-					// 서버에 유저 정보 저장하고 클라이언트에게 처리 완료 응답 보내기
-					userInfo.setUserName(msg.getContent());
-					manager.setUser(userInfo);
-//					allUsers.setUserInfo(userInfo);
-//					allUsers.put(userInfo.getUserName(), userInfo);
-//					manager.getAllUsers().put(cmd.getContent(), userInfo);
-					LOGGER.info("IP주소가 "+ctx.channel().remoteAddress()+"인 사용자가 닉네임을 등록했습니다. 닉네임 : " + msg.getContent());
-//					String [] contents = {"hello","world","I am", "Paul"};
-//					List<String> strList = new ArrayList<String>();
-//					strList.add("hello");
-//					strList.add("world");
-//					strList.add("I am");
-//					strList.add("Paul");
-					Map<String, String>strMap = new HashMap<String, String>();
-					strMap.put("Paul", "asdf");
-					strMap.put("John", "plfkksdfdf");
-					strMap.put("Will", "kfokokdf");
-					
-					ctx.writeAndFlush(new PositiveResponse("nameSet","", strMap));
-				}
-				manager.printAllUsers();
-			}
-		});
-	}
-	
-	private boolean isUserNameTaken(final Message msg) {
-//		ChatManager을 이용해 닉네임 중복 체크
-		if(manager.getAllUsers() == null || manager.getAllUsers().isEmpty()
-				|| ! manager.getAllUsers().containsKey(msg.getContent())) {
-			return false;
-		}
-		return true;
-	}
-		
-//		RoomInfo room = new RoomInfo();
-//		room.setRoomId(1);
-//		room.setRoomName("어서 오세요");
-//		Map <String, RoomInfo> allRooms = new HashMap<String, RoomInfo>();
-//		allRooms.put(room.getRoomName(), room);
-//		manager.setAllRooms(allRooms);
-//		
-//		
-//		return false;
-//	}
-	
-//	private void sendToClient(ChannelHandlerContext ctx, Command cmd) {
-//		ctx.writeAndFlush(cmd);
-//	}
 
-
-	
-	
-	
-//	private void processExit(ChannelHandlerContext ctx) {
-////		UserInfo userInfo = channelInfo.getUserInfo();
-////		if(userInfo != null) {
-////		ChannelInfo 에서 UserInfo를 가지고 와서 이벤트 처리 
-////		UserManager.userExit(userinfo.getUserName());
-////		channelInfo.setUserInfo(null);
-//		LOGGER.info(ctx.channel().remoteAddress()+"의 사용자가 나갔습니다.");
-////		}
-//	}
-	
-	
 
 }
