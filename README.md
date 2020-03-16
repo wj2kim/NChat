@@ -1,7 +1,11 @@
 # NChat
 
-< On Progress ... >
-
 Simple chat application (Server and Client) using Netty Framework and Java.
 
-0.0.1 prototype
+version 1.0.0
+
+
+
+Start 'Server' first, then 'Client'
+
+use "/help" for commands 
