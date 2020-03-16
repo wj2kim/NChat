@@ -6,6 +6,6 @@ version 1.0.0
 
 
 
-Start 'Server' first, then 'Client'
+Start 'Server' first, then one or more 'Client'
 
 use "/help" for commands 
