@@ -2,8 +2,10 @@
 
 Simple chat application (Server and Client) using Netty Framework and Java.
 
-version 1.0.0
+using TCP/IP protocol based on binary communication.
 
+
+version 1.0.0
 
 
 Start 'Server' first, then one or more 'Client'
